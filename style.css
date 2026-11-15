@@ -1,12 +1,14 @@
-/* Сброс базовых стилей */
-* {
+/* Базовый сброс стилей для мобильных и десктопных браузеров */
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Переменные цветовой схемы с поддержкой Telegram WebApp и автономных тем */
+/* Переменные цветовой схемы темы Telegram с поддержкой автономного режима */
 :root {
   --tg-bg: var(--tg-theme-bg-color, #ffffff);
   --tg-text: var(--tg-theme-text-color, #1c1c1e);
@@ -52,78 +54,110 @@ body {
 /* Главная карточка приложения */
 .app-card {
   width: 100%;
-  max-width: 440px;
+  max-width: 460px;
   background-color: var(--tg-bg);
   color: var(--tg-text);
   border: 1px solid var(--tg-border);
   border-radius: 20px;
-  padding: 18px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
   gap: 14px;
-  transition: all 0.25s ease;
 }
 
-/* Шапка */
+/* Шапка приложения */
 .app-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--tg-border);
+  width: 100%;
 }
 
-.header-info {
+.header-left {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  flex: 1;
 }
 
+/* Верхняя иконка-бейдж с галочкой */
 .header-badge {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
   border-radius: 50%;
   background-color: var(--tg-button);
   color: var(--tg-button-text);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 13px;
   flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.header-badge svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--tg-button-text);
+}
+
+.header-titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .title {
   font-size: 17px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.25;
+  color: var(--tg-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* Счетчик выполнения */
 .progress-text {
   font-size: 12px;
+  font-weight: 500;
   color: var(--tg-hint);
+  margin-top: 2px;
 }
 
-/* Кнопка переключения темы */
-.theme-toggle {
-  display: flex;
+/* Кнопка переключения темы (с явным сбросом мобильных стилей iOS WebKit) */
+button.theme-toggle {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   background-color: var(--tg-secondary-bg);
   color: var(--tg-text);
   border: 1px solid var(--tg-border);
-  border-radius: 20px;
-  padding: 5px 10px;
+  border-radius: 18px;
+  padding: 6px 12px;
+  font-family: inherit;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
+  line-height: 1;
   cursor: pointer;
   outline: none;
-  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.2s, transform 0.1s, background-color 0.2s;
 }
 
-.theme-toggle:hover {
-  opacity: 0.9;
+button.theme-toggle:active {
+  transform: scale(0.96);
+  opacity: 0.85;
 }
 
 /* Форма добавления привычки */
@@ -133,8 +167,11 @@ body {
 }
 
 .habit-input {
+  -webkit-appearance: none;
+  appearance: none;
   flex: 1;
   padding: 10px 14px;
+  font-family: inherit;
   font-size: 14px;
   border: 1px solid var(--tg-border);
   border-radius: 12px;
@@ -152,8 +189,11 @@ body {
   border-color: var(--tg-button);
 }
 
-.habit-btn {
+button.habit-btn {
+  -webkit-appearance: none;
+  appearance: none;
   padding: 10px 14px;
+  font-family: inherit;
   font-size: 14px;
   font-weight: 600;
   color: var(--tg-button-text);
@@ -165,7 +205,7 @@ body {
   transition: opacity 0.2s, transform 0.1s;
 }
 
-.habit-btn:active {
+button.habit-btn:active {
   transform: scale(0.97);
   opacity: 0.9;
 }
@@ -196,7 +236,7 @@ body {
   border: 1px solid var(--tg-border);
   cursor: pointer;
   user-select: none;
-  transition: all 0.15s ease;
+  transition: transform 0.12s ease, opacity 0.2s ease;
 }
 
 .habit-item:active {
@@ -252,7 +292,9 @@ body {
 }
 
 /* Кнопка удаления */
-.delete-btn {
+button.delete-btn {
+  -webkit-appearance: none;
+  appearance: none;
   background: transparent;
   border: none;
   color: var(--tg-hint);
@@ -266,7 +308,7 @@ body {
   transition: opacity 0.2s, color 0.2s;
 }
 
-.delete-btn:hover {
+button.delete-btn:hover {
   opacity: 1;
   color: #ff3b30;
 }

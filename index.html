@@ -4,24 +4,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Трекер привычек</title>
-  <!-- Подключение официального скрипта Telegram Web App -->
+  <!-- Официальный скрипт Telegram Web App -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="style.css">
+  <!-- Подключение стилей с параметром ?v=2 для сброса кэша Telegram -->
+  <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
   <div class="app-card">
-    <!-- Шапка приложения с прогрессом и переключателем темы -->
+    <!-- Шапка приложения с иконкой, названием, прогрессом и переключателем темы -->
     <header class="app-header">
-      <div class="header-info">
-        <div class="header-badge">✓</div>
-        <div>
+      <div class="header-left">
+        <div class="header-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <div class="header-titles">
           <h1 class="title">Трекер привычек</h1>
           <span id="progress-text" class="progress-text">Выполнено: 0 из 0</span>
         </div>
       </div>
       <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Переключить тему">
         <span id="theme-icon">🌙</span>
-        <span id="theme-label">Тёмная тема</span>
+        <span id="theme-label">Тёмная</span>
       </button>
     </header>
 
@@ -45,6 +50,7 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <!-- Подключение скрипта с параметром ?v=2 для сброса кэша Telegram -->
+  <script src="app.js?v=2"></script>
 </body>
 </html>

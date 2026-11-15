@@ -15,54 +15,15 @@ const DEFAULT_HABITS = [
   { id: '3', text: 'Прочитать 10 страниц книги', completed: false }
 ];
 
-// Элементы DOM
-const habitForm = document.getElementById('habit-form');
-const habitInput = document.getElementById('habit-input');
-const habitList = document.getElementById('habit-list');
-const emptyState = document.getElementById('empty-state');
-const progressText = document.getElementById('progress-text');
-const themeToggle = document.getElementById('theme-toggle');
-const themeIcon = document.getElementById('theme-icon');
-const themeLabel = document.getElementById('theme-label');
-
-// Управление темой (автоматически из Telegram WebApp или ручной переключатель)
-let isDark = tg?.colorScheme ? tg.colorScheme === 'dark' : true;
-
-function applyTheme(dark) {
-  isDark = dark;
-  document.body.classList.toggle('tg-dark', isDark);
-  document.body.classList.toggle('tg-light', !isDark);
-  if (themeIcon && themeLabel) {
-    themeIcon.textContent = isDark ? '🌙' : '☀️';
-    themeLabel.textContent = isDark ? 'Тёмная тема' : 'Светлая тема';
-  }
-}
-
-// Применяем начальную тему
-applyTheme(isDark);
-
-if (themeToggle) {
-  themeToggle.addEventListener('click', () => {
-    applyTheme(!isDark);
-  });
-}
-
-// Если тема Telegram изменится в реальном времени
-if (tg?.onEvent) {
-  tg.onEvent('themeChanged', () => {
-    if (tg.colorScheme) {
-      applyTheme(tg.colorScheme === 'dark');
-    }
-  });
-}
-
 // Загрузка привычек из localStorage
 let habits = loadHabits();
 
 function loadHabits() {
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : DEFAULT_HABITS;
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return DEFAULT_HABITS;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : DEFAULT_HABITS;
   } catch (e) {
     console.error('Ошибка загрузки привычек из localStorage:', e);
     return DEFAULT_HABITS;
@@ -78,7 +39,7 @@ function saveHabits() {
   }
 }
 
-// Безопасное экранирование текста для HTML
+// Экранирование HTML для защиты от XSS
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
@@ -96,59 +57,89 @@ function triggerHaptic(type = 'light') {
   }
 }
 
-// Обновление счетчика прогресса
+// Обновление счетчика "Выполнено: X из Y"
 function updateProgress() {
-  const total = habits.length;
-  const completedCount = habits.filter((h) => h.completed).length;
-  if (progressText) {
-    progressText.textContent = `Выполнено: ${completedCount} из ${total}`;
-  }
+  const el = document.getElementById('progress-text');
+  if (!el) return;
+
+  const total = Array.isArray(habits) ? habits.length : 0;
+  const completedCount = Array.isArray(habits)
+    ? habits.filter((h) => Boolean(h.completed)).length
+    : 0;
+
+  el.textContent = `Выполнено: ${completedCount} из ${total}`;
 }
 
-// Отрисовка списка привычек
+// Управление темой оформления
+function getInitialTheme() {
+  if (tg?.colorScheme) {
+    return tg.colorScheme === 'dark';
+  }
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+let isDark = getInitialTheme();
+
+function applyTheme(dark) {
+  isDark = dark;
+  document.body.classList.remove('tg-dark', 'tg-light');
+  document.body.classList.add(isDark ? 'tg-dark' : 'tg-light');
+
+  const themeIcon = document.getElementById('theme-icon');
+  const themeLabel = document.getElementById('theme-label');
+  if (themeIcon) themeIcon.textContent = isDark ? '🌙' : '☀️';
+  if (themeLabel) themeLabel.textContent = isDark ? 'Тёмная' : 'Светлая';
+}
+
+// Отрисовка списка привычек в DOM
 function renderHabits() {
+  const habitList = document.getElementById('habit-list');
+  const emptyState = document.getElementById('empty-state');
+  if (!habitList) return;
+
   habitList.innerHTML = '';
-  updateProgress();
 
   if (habits.length === 0) {
-    emptyState.style.display = 'block';
-    return;
+    if (emptyState) emptyState.style.display = 'block';
+  } else {
+    if (emptyState) emptyState.style.display = 'none';
+
+    habits.forEach((habit) => {
+      const li = document.createElement('li');
+      li.className = `habit-item ${habit.completed ? 'completed' : ''}`;
+      li.dataset.id = habit.id;
+
+      li.innerHTML = `
+        <div class="habit-content">
+          <div class="habit-checkbox" aria-label="Отметить привычку">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <span class="habit-text">${escapeHtml(habit.text)}</span>
+        </div>
+        <button class="delete-btn" type="button" aria-label="Удалить привычку" title="Удалить">&times;</button>
+      `;
+
+      // Переключение статуса выполнения привычки
+      const content = li.querySelector('.habit-content');
+      content.addEventListener('click', () => {
+        toggleHabit(habit.id);
+      });
+
+      // Удаление привычки
+      const deleteBtn = li.querySelector('.delete-btn');
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteHabit(habit.id);
+      });
+
+      habitList.appendChild(li);
+    });
   }
 
-  emptyState.style.display = 'none';
-
-  habits.forEach((habit) => {
-    const li = document.createElement('li');
-    li.className = `habit-item ${habit.completed ? 'completed' : ''}`;
-    li.dataset.id = habit.id;
-
-    li.innerHTML = `
-      <div class="habit-content">
-        <div class="habit-checkbox" aria-label="Отметить привычку">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-        </div>
-        <span class="habit-text">${escapeHtml(habit.text)}</span>
-      </div>
-      <button class="delete-btn" aria-label="Удалить привычку" title="Удалить">&times;</button>
-    `;
-
-    // Переключение статуса выполнения при клике
-    const habitContent = li.querySelector('.habit-content');
-    habitContent.addEventListener('click', () => {
-      toggleHabit(habit.id);
-    });
-
-    // Удаление привычки
-    const deleteBtn = li.querySelector('.delete-btn');
-    deleteBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      deleteHabit(habit.id);
-    });
-
-    habitList.appendChild(li);
-  });
+  // Обновляем счетчик
+  updateProgress();
 }
 
 // Добавление новой привычки
@@ -162,10 +153,10 @@ function addHabit(text) {
     completed: false
   };
 
-  // Добавляем в начало списка
   habits.unshift(newHabit);
   saveHabits();
   renderHabits();
+  updateProgress();
   triggerHaptic('success');
 }
 
@@ -180,6 +171,7 @@ function toggleHabit(id) {
 
   saveHabits();
   renderHabits();
+  updateProgress();
   triggerHaptic('light');
 }
 
@@ -188,16 +180,48 @@ function deleteHabit(id) {
   habits = habits.filter((habit) => habit.id !== id);
   saveHabits();
   renderHabits();
+  updateProgress();
   triggerHaptic('medium');
 }
 
-// Обработчик отправки формы
-habitForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  addHabit(habitInput.value);
-  habitInput.value = '';
-  habitInput.focus();
-});
+// Инициализация событий при загрузке документа
+function init() {
+  applyTheme(isDark);
 
-// Первоначальный рендеринг при запуске
-renderHabits();
+  const themeToggle = document.getElementById('theme-toggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      applyTheme(!isDark);
+      triggerHaptic('light');
+    });
+  }
+
+  if (tg?.onEvent) {
+    tg.onEvent('themeChanged', () => {
+      if (tg.colorScheme) {
+        applyTheme(tg.colorScheme === 'dark');
+      }
+    });
+  }
+
+  const habitForm = document.getElementById('habit-form');
+  const habitInput = document.getElementById('habit-input');
+  if (habitForm && habitInput) {
+    habitForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      addHabit(habitInput.value);
+      habitInput.value = '';
+      habitInput.focus();
+    });
+  }
+
+  renderHabits();
+  updateProgress();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
