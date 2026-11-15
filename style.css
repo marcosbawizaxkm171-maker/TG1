@@ -1,4 +1,4 @@
-/* Сброс базовых стилей и адаптация под тему Telegram */
+/* Сброс базовых стилей */
 * {
   margin: 0;
   padding: 0;
@@ -6,33 +6,124 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Переменные цветовой схемы с поддержкой Telegram WebApp и автономных тем */
+:root {
+  --tg-bg: var(--tg-theme-bg-color, #ffffff);
+  --tg-text: var(--tg-theme-text-color, #1c1c1e);
+  --tg-secondary-bg: var(--tg-theme-secondary-bg-color, #f4f4f5);
+  --tg-button: var(--tg-theme-button-color, #2481cc);
+  --tg-button-text: var(--tg-theme-button-text-color, #ffffff);
+  --tg-hint: var(--tg-theme-hint-color, #8e8e93);
+  --tg-border: rgba(128, 128, 128, 0.2);
+}
+
+body.tg-dark {
+  --tg-bg: var(--tg-theme-bg-color, #1c1c1e);
+  --tg-text: var(--tg-theme-text-color, #ffffff);
+  --tg-secondary-bg: var(--tg-theme-secondary-bg-color, #2c2c2e);
+  --tg-button: var(--tg-theme-button-color, #2ea6ff);
+  --tg-button-text: var(--tg-theme-button-text-color, #ffffff);
+  --tg-hint: var(--tg-theme-hint-color, #8e8e93);
+  --tg-border: #38383a;
+}
+
+body.tg-light {
+  --tg-bg: var(--tg-theme-bg-color, #ffffff);
+  --tg-text: var(--tg-theme-text-color, #1c1c1e);
+  --tg-secondary-bg: var(--tg-theme-secondary-bg-color, #f4f4f5);
+  --tg-button: var(--tg-theme-button-color, #2481cc);
+  --tg-button-text: var(--tg-theme-button-text-color, #ffffff);
+  --tg-hint: var(--tg-theme-hint-color, #8e8e93);
+  --tg-border: #e2e8f0;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background-color: var(--tg-theme-bg-color, #ffffff);
-  color: var(--tg-theme-text-color, #222222);
+  background-color: var(--tg-bg);
+  color: var(--tg-text);
   min-height: 100vh;
   padding: 16px;
   display: flex;
   justify-content: center;
+  align-items: flex-start;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-.container {
+/* Главная карточка приложения */
+.app-card {
   width: 100%;
-  max-width: 480px;
+  max-width: 440px;
+  background-color: var(--tg-bg);
+  color: var(--tg-text);
+  border: 1px solid var(--tg-border);
+  border-radius: 20px;
+  padding: 18px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+  transition: all 0.25s ease;
 }
 
-.header {
-  text-align: center;
-  padding: 8px 0;
+/* Шапка */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--tg-border);
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--tg-button);
+  color: var(--tg-button-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
 }
 
 .title {
-  font-size: 24px;
+  font-size: 17px;
   font-weight: 700;
-  color: var(--tg-theme-text-color, #222222);
+  line-height: 1.2;
+}
+
+.progress-text {
+  font-size: 12px;
+  color: var(--tg-hint);
+}
+
+/* Кнопка переключения темы */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--tg-secondary-bg);
+  color: var(--tg-text);
+  border: 1px solid var(--tg-border);
+  border-radius: 20px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle:hover {
+  opacity: 0.9;
 }
 
 /* Форма добавления привычки */
@@ -43,35 +134,35 @@ body {
 
 .habit-input {
   flex: 1;
-  padding: 12px 16px;
-  font-size: 16px;
-  border: 1px solid rgba(128, 128, 128, 0.25);
+  padding: 10px 14px;
+  font-size: 14px;
+  border: 1px solid var(--tg-border);
   border-radius: 12px;
   outline: none;
-  background-color: var(--tg-theme-secondary-bg-color, #f4f4f5);
-  color: var(--tg-theme-text-color, #222222);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: var(--tg-secondary-bg);
+  color: var(--tg-text);
+  transition: border-color 0.2s;
 }
 
 .habit-input::placeholder {
-  color: var(--tg-theme-hint-color, #8e8e93);
+  color: var(--tg-hint);
 }
 
 .habit-input:focus {
-  border-color: var(--tg-theme-button-color, #2481cc);
+  border-color: var(--tg-button);
 }
 
 .habit-btn {
-  padding: 12px 18px;
-  font-size: 15px;
+  padding: 10px 14px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--tg-theme-button-text-color, #ffffff);
-  background-color: var(--tg-theme-button-color, #2481cc);
+  color: var(--tg-button-text);
+  background-color: var(--tg-button);
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.1s;
   white-space: nowrap;
+  transition: opacity 0.2s, transform 0.1s;
 }
 
 .habit-btn:active {
@@ -83,7 +174,6 @@ body {
 .habit-list-container {
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 
 .habit-list {
@@ -91,49 +181,57 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
 .habit-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-radius: 12px;
-  background-color: var(--tg-theme-secondary-bg-color, #f4f4f5);
-  transition: opacity 0.2s, background-color 0.2s;
+  background-color: var(--tg-secondary-bg);
+  border: 1px solid var(--tg-border);
   cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.habit-item:active {
+  transform: scale(0.99);
 }
 
 .habit-content {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex: 1;
-  overflow: hidden;
+  min-width: 0;
 }
 
 .habit-checkbox {
   width: 20px;
   height: 20px;
   border-radius: 6px;
-  border: 2px solid var(--tg-theme-button-color, #2481cc);
+  border: 2px solid var(--tg-button);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s;
 }
 
 .habit-item.completed .habit-checkbox {
-  background-color: var(--tg-theme-button-color, #2481cc);
+  background-color: var(--tg-button);
 }
 
 .habit-checkbox svg {
   display: none;
-  width: 14px;
-  height: 14px;
-  stroke: var(--tg-theme-button-text-color, #ffffff);
+  width: 13px;
+  height: 13px;
+  stroke: var(--tg-button-text);
 }
 
 .habit-item.completed .habit-checkbox svg {
@@ -141,40 +239,43 @@ body {
 }
 
 .habit-text {
-  font-size: 16px;
-  color: var(--tg-theme-text-color, #222222);
+  font-size: 14px;
+  color: var(--tg-text);
   word-break: break-word;
-  transition: color 0.2s, text-decoration 0.2s;
+  transition: opacity 0.2s, text-decoration 0.2s;
 }
 
 /* Отметка о выполнении — зачеркивание */
 .habit-item.completed .habit-text {
   text-decoration: line-through;
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
+/* Кнопка удаления */
 .delete-btn {
   background: transparent;
   border: none;
-  color: var(--tg-theme-hint-color, #8e8e93);
-  font-size: 20px;
+  color: var(--tg-hint);
+  font-size: 18px;
   line-height: 1;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 8px;
-  transition: color 0.2s, background-color 0.2s;
+  padding: 4px 6px;
+  border-radius: 6px;
+  margin-left: 6px;
+  opacity: 0.5;
+  transition: opacity 0.2s, color 0.2s;
 }
 
 .delete-btn:hover {
+  opacity: 1;
   color: #ff3b30;
-  background-color: rgba(255, 59, 48, 0.1);
 }
 
 /* Пустое состояние */
 .empty-state {
   text-align: center;
-  color: var(--tg-theme-hint-color, #8e8e93);
-  font-size: 15px;
-  padding: 32px 16px;
+  color: var(--tg-hint);
+  font-size: 14px;
+  padding: 24px 12px;
   display: none;
 }

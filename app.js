@@ -8,11 +8,53 @@ if (tg) {
 // Ключ для хранения в localStorage
 const STORAGE_KEY = 'tg_habits';
 
+// Начальные примеры привычек (если хранилище пустое)
+const DEFAULT_HABITS = [
+  { id: '1', text: 'Выпить 2 стакана воды утром', completed: true },
+  { id: '2', text: 'Утренняя зарядка 15 мин', completed: false },
+  { id: '3', text: 'Прочитать 10 страниц книги', completed: false }
+];
+
 // Элементы DOM
 const habitForm = document.getElementById('habit-form');
 const habitInput = document.getElementById('habit-input');
 const habitList = document.getElementById('habit-list');
 const emptyState = document.getElementById('empty-state');
+const progressText = document.getElementById('progress-text');
+const themeToggle = document.getElementById('theme-toggle');
+const themeIcon = document.getElementById('theme-icon');
+const themeLabel = document.getElementById('theme-label');
+
+// Управление темой (автоматически из Telegram WebApp или ручной переключатель)
+let isDark = tg?.colorScheme ? tg.colorScheme === 'dark' : true;
+
+function applyTheme(dark) {
+  isDark = dark;
+  document.body.classList.toggle('tg-dark', isDark);
+  document.body.classList.toggle('tg-light', !isDark);
+  if (themeIcon && themeLabel) {
+    themeIcon.textContent = isDark ? '🌙' : '☀️';
+    themeLabel.textContent = isDark ? 'Тёмная тема' : 'Светлая тема';
+  }
+}
+
+// Применяем начальную тему
+applyTheme(isDark);
+
+if (themeToggle) {
+  themeToggle.addEventListener('click', () => {
+    applyTheme(!isDark);
+  });
+}
+
+// Если тема Telegram изменится в реальном времени
+if (tg?.onEvent) {
+  tg.onEvent('themeChanged', () => {
+    if (tg.colorScheme) {
+      applyTheme(tg.colorScheme === 'dark');
+    }
+  });
+}
 
 // Загрузка привычек из localStorage
 let habits = loadHabits();
@@ -20,10 +62,10 @@ let habits = loadHabits();
 function loadHabits() {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    return data ? JSON.parse(data) : DEFAULT_HABITS;
   } catch (e) {
     console.error('Ошибка загрузки привычек из localStorage:', e);
-    return [];
+    return DEFAULT_HABITS;
   }
 }
 
@@ -43,7 +85,7 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// Тактильный отклик через Telegram WebApp (если доступен)
+// Тактильный отклик через Telegram WebApp
 function triggerHaptic(type = 'light') {
   if (tg?.HapticFeedback) {
     if (type === 'success') {
@@ -54,9 +96,19 @@ function triggerHaptic(type = 'light') {
   }
 }
 
+// Обновление счетчика прогресса
+function updateProgress() {
+  const total = habits.length;
+  const completedCount = habits.filter((h) => h.completed).length;
+  if (progressText) {
+    progressText.textContent = `Выполнено: ${completedCount} из ${total}`;
+  }
+}
+
 // Отрисовка списка привычек
 function renderHabits() {
   habitList.innerHTML = '';
+  updateProgress();
 
   if (habits.length === 0) {
     emptyState.style.display = 'block';
@@ -79,10 +131,10 @@ function renderHabits() {
         </div>
         <span class="habit-text">${escapeHtml(habit.text)}</span>
       </div>
-      <button class="delete-btn" aria-label="Удалить привычку">&times;</button>
+      <button class="delete-btn" aria-label="Удалить привычку" title="Удалить">&times;</button>
     `;
 
-    // Переключение статуса выполнения при клике на содержимое
+    // Переключение статуса выполнения при клике
     const habitContent = li.querySelector('.habit-content');
     habitContent.addEventListener('click', () => {
       toggleHabit(habit.id);
@@ -110,7 +162,8 @@ function addHabit(text) {
     completed: false
   };
 
-  habits.push(newHabit);
+  // Добавляем в начало списка
+  habits.unshift(newHabit);
   saveHabits();
   renderHabits();
   triggerHaptic('success');
@@ -146,5 +199,5 @@ habitForm.addEventListener('submit', (e) => {
   habitInput.focus();
 });
 
-// Первоначальный рендеринг при загрузке страницы
+// Первоначальный рендеринг при запуске
 renderHabits();

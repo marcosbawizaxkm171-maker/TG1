@@ -9,12 +9,23 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <header class="header">
-      <h1 class="title">Трекер привычек</h1>
+  <div class="app-card">
+    <!-- Шапка приложения с прогрессом и переключателем темы -->
+    <header class="app-header">
+      <div class="header-info">
+        <div class="header-badge">✓</div>
+        <div>
+          <h1 class="title">Трекер привычек</h1>
+          <span id="progress-text" class="progress-text">Выполнено: 0 из 0</span>
+        </div>
+      </div>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Переключить тему">
+        <span id="theme-icon">🌙</span>
+        <span id="theme-label">Тёмная тема</span>
+      </button>
     </header>
 
-    <!-- Поле для ввода новой привычки и кнопка "Добавить" -->
+    <!-- Поле ввода новой привычки и кнопка добавления -->
     <form id="habit-form" class="habit-form">
       <input 
         type="text" 
@@ -24,13 +35,13 @@
         autocomplete="off" 
         required
       >
-      <button type="submit" id="add-btn" class="habit-btn">Добавить</button>
+      <button type="submit" id="add-btn" class="habit-btn">+ Добавить</button>
     </form>
 
     <!-- Контейнер для списка привычек -->
     <div class="habit-list-container">
       <ul id="habit-list" class="habit-list"></ul>
-      <p id="empty-state" class="empty-state">У вас пока нет привычек. Добавьте первую выше!</p>
+      <p id="empty-state" class="empty-state">Список пуст. Добавьте свою первую привычку!</p>
     </div>
   </div>
 
