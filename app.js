@@ -9,7 +9,7 @@ if (tg) {
 const SUPABASE_URL = 'https://bxihlyvxjbogrknhictr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_yzIVR0rDqR7P7woXxMoVMQ_U2luuo-k';
 
-// Инициализация клиента Supabase через глобальный объект библиотеки supabase-js
+// Инициализация клиента Supabase через CDN-библиотеку
 const supabaseClient = window.supabase
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
   : null;
@@ -34,14 +34,44 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// Тактильный отклик через Telegram WebApp
+// Нативная вибрация Telegram (Haptic Feedback)
 function triggerHaptic(type = 'light') {
   if (tg?.HapticFeedback) {
     if (type === 'success') {
       tg.HapticFeedback.notificationOccurred('success');
+    } else if (type === 'medium') {
+      tg.HapticFeedback.impactOccurred('medium');
     } else {
-      tg.HapticFeedback.impactOccurred(type);
+      tg.HapticFeedback.impactOccurred('light');
     }
+  }
+}
+
+// Праздничный салют конфетти при 100% выполнении привычек
+function launchConfetti() {
+  if (typeof confetti === 'function') {
+    // Основной залп конфетти по центру
+    confetti({
+      particleCount: 80,
+      spread: 70,
+      origin: { y: 0.6 }
+    });
+
+    // Боковые салюты через 200 мс для вау-эффекта
+    setTimeout(() => {
+      confetti({
+        particleCount: 40,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.7 }
+      });
+      confetti({
+        particleCount: 40,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1, y: 0.7 }
+      });
+    }, 200);
   }
 }
 
@@ -225,7 +255,7 @@ async function addHabit(title) {
 
     if (habitInput) habitInput.value = '';
     renderHabits();
-    triggerHaptic('success');
+    triggerHaptic('light');
   } catch (err) {
     console.error('Сетевая ошибка при добавлении привычки:', err);
   } finally {
@@ -247,7 +277,20 @@ async function toggleHabit(id) {
   // Оптимистичное обновление интерфейса
   habit.is_done = newStatus;
   renderHabits();
-  triggerHaptic('light');
+
+  // Проверяем, выполнено ли 100% привычек
+  const total = habits.length;
+  const completedCount = habits.filter((h) => Boolean(h.is_done)).length;
+  const isAllDone = total > 0 && completedCount === total;
+
+  if (newStatus && isAllDone) {
+    // Победный отклик и праздничный салют конфетти при 100% выполнении
+    triggerHaptic('success');
+    launchConfetti();
+  } else {
+    // Обычная легкая вибрация при отметке
+    triggerHaptic('light');
+  }
 
   try {
     const { error } = await supabaseClient
