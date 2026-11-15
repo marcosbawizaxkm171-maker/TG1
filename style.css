@@ -8,41 +8,135 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Переменные цветовой схемы темы Telegram с поддержкой автономного режима */
+/* Базовые цвета по умолчанию (fallback на переменные Telegram) */
 :root {
-  --tg-bg: var(--tg-theme-bg-color, #ffffff);
-  --tg-text: var(--tg-theme-text-color, #1c1c1e);
-  --tg-secondary-bg: var(--tg-theme-secondary-bg-color, #f4f4f5);
-  --tg-button: var(--tg-theme-button-color, #2481cc);
-  --tg-button-text: var(--tg-theme-button-text-color, #ffffff);
-  --tg-hint: var(--tg-theme-hint-color, #8e8e93);
-  --tg-border: rgba(128, 128, 128, 0.2);
+  --bg-color: var(--tg-theme-bg-color, #ffffff);
+  --text-color: var(--tg-theme-text-color, #1c1c1e);
+  --secondary-bg-color: var(--tg-theme-secondary-bg-color, #f4f4f5);
+  --button-color: var(--tg-theme-button-color, #2481cc);
+  --button-text-color: var(--tg-theme-button-text-color, #ffffff);
+  --hint-color: var(--tg-theme-hint-color, #8e8e93);
+  --border-color: rgba(128, 128, 128, 0.2);
 }
 
-body.tg-dark {
-  --tg-bg: var(--tg-theme-bg-color, #1c1c1e);
-  --tg-text: var(--tg-theme-text-color, #ffffff);
-  --tg-secondary-bg: var(--tg-theme-secondary-bg-color, #2c2c2e);
-  --tg-button: var(--tg-theme-button-color, #2ea6ff);
-  --tg-button-text: var(--tg-theme-button-text-color, #ffffff);
-  --tg-hint: var(--tg-theme-hint-color, #8e8e93);
-  --tg-border: #38383a;
+/* ============================================================
+   ЖЁСТКОЕ ПЕРЕОПРЕДЕЛЕНИЕ ТЕМ (НЕЗАВИСИМО ОТ СИСТЕМНОЙ ТЕМЫ TELEGRAM)
+   ============================================================ */
+
+/* ТЁМНАЯ ТЕМА */
+body.dark-theme {
+  --bg-color: #17212b !important;
+  --text-color: #ffffff !important;
+  --secondary-bg-color: #242f3d !important;
+  --button-color: #2ea6ff !important;
+  --button-text-color: #ffffff !important;
+  --hint-color: #7f91a4 !important;
+  --border-color: #2b394a !important;
+  background-color: #17212b !important;
+  color: #ffffff !important;
 }
 
-body.tg-light {
-  --tg-bg: var(--tg-theme-bg-color, #ffffff);
-  --tg-text: var(--tg-theme-text-color, #1c1c1e);
-  --tg-secondary-bg: var(--tg-theme-secondary-bg-color, #f4f4f5);
-  --tg-button: var(--tg-theme-button-color, #2481cc);
-  --tg-button-text: var(--tg-theme-button-text-color, #ffffff);
-  --tg-hint: var(--tg-theme-hint-color, #8e8e93);
-  --tg-border: #e2e8f0;
+body.dark-theme .app-card {
+  background-color: #17212b !important;
+  color: #ffffff !important;
+  border-color: #2b394a !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
 }
+
+body.dark-theme .app-header {
+  border-bottom-color: #2b394a !important;
+}
+
+body.dark-theme .title {
+  color: #ffffff !important;
+}
+
+body.dark-theme .progress-text {
+  color: #7f91a4 !important;
+}
+
+body.dark-theme button.theme-toggle,
+body.dark-theme .habit-input,
+body.dark-theme .habit-item {
+  background-color: #242f3d !important;
+  color: #ffffff !important;
+  border-color: #2b394a !important;
+}
+
+body.dark-theme .habit-text {
+  color: #ffffff !important;
+}
+
+body.dark-theme .habit-input::placeholder {
+  color: #7f91a4 !important;
+}
+
+body.dark-theme button.delete-btn,
+body.dark-theme .empty-state {
+  color: #7f91a4 !important;
+}
+
+/* СВЕТЛАЯ ТЕМА */
+body.light-theme {
+  --bg-color: #ffffff !important;
+  --text-color: #000000 !important;
+  --secondary-bg-color: #f1f2f5 !important;
+  --button-color: #2481cc !important;
+  --button-text-color: #ffffff !important;
+  --hint-color: #8e8e93 !important;
+  --border-color: #e2e8f0 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+body.light-theme .app-card {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08) !important;
+}
+
+body.light-theme .app-header {
+  border-bottom-color: #e2e8f0 !important;
+}
+
+body.light-theme .title {
+  color: #000000 !important;
+}
+
+body.light-theme .progress-text {
+  color: #8e8e93 !important;
+}
+
+body.light-theme button.theme-toggle,
+body.light-theme .habit-input,
+body.light-theme .habit-item {
+  background-color: #f1f2f5 !important;
+  color: #000000 !important;
+  border-color: #e2e8f0 !important;
+}
+
+body.light-theme .habit-text {
+  color: #000000 !important;
+}
+
+body.light-theme .habit-input::placeholder {
+  color: #8e8e93 !important;
+}
+
+body.light-theme button.delete-btn,
+body.light-theme .empty-state {
+  color: #8e8e93 !important;
+}
+
+/* ============================================================
+   ОСНОВНЫЕ СТИЛИ ЭЛЕМЕНТОВ
+   ============================================================ */
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background-color: var(--tg-bg);
-  color: var(--tg-text);
+  background-color: var(--bg-color);
+  color: var(--text-color);
   min-height: 100vh;
   padding: 16px;
   display: flex;
@@ -51,30 +145,32 @@ body {
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* Главная карточка приложения */
+/* Карточка приложения */
 .app-card {
   width: 100%;
   max-width: 460px;
-  background-color: var(--tg-bg);
-  color: var(--tg-text);
-  border: 1px solid var(--tg-border);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 16px;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
   gap: 14px;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
 }
 
-/* Шапка приложения */
+/* Шапка */
 .app-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--tg-border);
+  border-bottom: 1px solid var(--border-color);
   width: 100%;
+  transition: border-color 0.25s ease;
 }
 
 .header-left {
@@ -85,15 +181,15 @@ body {
   flex: 1;
 }
 
-/* Верхняя иконка-бейдж с галочкой */
+/* Иконка в шапке */
 .header-badge {
   width: 32px;
   height: 32px;
   min-width: 32px;
   min-height: 32px;
   border-radius: 50%;
-  background-color: var(--tg-button);
-  color: var(--tg-button-text);
+  background-color: var(--button-color);
+  color: var(--button-text-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -104,7 +200,7 @@ body {
 .header-badge svg {
   width: 16px;
   height: 16px;
-  stroke: var(--tg-button-text);
+  stroke: var(--button-text-color);
 }
 
 .header-titles {
@@ -117,21 +213,20 @@ body {
   font-size: 17px;
   font-weight: 700;
   line-height: 1.25;
-  color: var(--tg-text);
+  color: var(--text-color);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Счетчик выполнения */
 .progress-text {
   font-size: 12px;
   font-weight: 500;
-  color: var(--tg-hint);
+  color: var(--hint-color);
   margin-top: 2px;
 }
 
-/* Кнопка переключения темы (с явным сбросом мобильных стилей iOS WebKit) */
+/* Кнопка переключения темы (сброс системных стилей iOS/Android) */
 button.theme-toggle {
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -139,9 +234,9 @@ button.theme-toggle {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background-color: var(--tg-secondary-bg);
-  color: var(--tg-text);
-  border: 1px solid var(--tg-border);
+  background-color: var(--secondary-bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
   border-radius: 18px;
   padding: 6px 12px;
   font-family: inherit;
@@ -152,7 +247,7 @@ button.theme-toggle {
   outline: none;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: opacity 0.2s, transform 0.1s, background-color 0.2s;
+  transition: opacity 0.2s, transform 0.1s, background-color 0.25s, border-color 0.25s;
 }
 
 button.theme-toggle:active {
@@ -173,20 +268,20 @@ button.theme-toggle:active {
   padding: 10px 14px;
   font-family: inherit;
   font-size: 14px;
-  border: 1px solid var(--tg-border);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   outline: none;
-  background-color: var(--tg-secondary-bg);
-  color: var(--tg-text);
-  transition: border-color 0.2s;
+  background-color: var(--secondary-bg-color);
+  color: var(--text-color);
+  transition: border-color 0.2s, background-color 0.25s;
 }
 
 .habit-input::placeholder {
-  color: var(--tg-hint);
+  color: var(--hint-color);
 }
 
 .habit-input:focus {
-  border-color: var(--tg-button);
+  border-color: var(--button-color);
 }
 
 button.habit-btn {
@@ -196,8 +291,8 @@ button.habit-btn {
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
-  color: var(--tg-button-text);
-  background-color: var(--tg-button);
+  color: var(--button-text-color);
+  background-color: var(--button-color);
   border: none;
   border-radius: 12px;
   cursor: pointer;
@@ -232,11 +327,11 @@ button.habit-btn:active {
   justify-content: space-between;
   padding: 10px 12px;
   border-radius: 12px;
-  background-color: var(--tg-secondary-bg);
-  border: 1px solid var(--tg-border);
+  background-color: var(--secondary-bg-color);
+  border: 1px solid var(--border-color);
   cursor: pointer;
   user-select: none;
-  transition: transform 0.12s ease, opacity 0.2s ease;
+  transition: transform 0.12s ease, opacity 0.2s ease, background-color 0.25s ease, border-color 0.25s ease;
 }
 
 .habit-item:active {
@@ -255,7 +350,7 @@ button.habit-btn:active {
   width: 20px;
   height: 20px;
   border-radius: 6px;
-  border: 2px solid var(--tg-button);
+  border: 2px solid var(--button-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -264,14 +359,14 @@ button.habit-btn:active {
 }
 
 .habit-item.completed .habit-checkbox {
-  background-color: var(--tg-button);
+  background-color: var(--button-color);
 }
 
 .habit-checkbox svg {
   display: none;
   width: 13px;
   height: 13px;
-  stroke: var(--tg-button-text);
+  stroke: var(--button-text-color);
 }
 
 .habit-item.completed .habit-checkbox svg {
@@ -280,7 +375,7 @@ button.habit-btn:active {
 
 .habit-text {
   font-size: 14px;
-  color: var(--tg-text);
+  color: var(--text-color);
   word-break: break-word;
   transition: opacity 0.2s, text-decoration 0.2s;
 }
@@ -297,7 +392,7 @@ button.delete-btn {
   appearance: none;
   background: transparent;
   border: none;
-  color: var(--tg-hint);
+  color: var(--hint-color);
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
@@ -316,7 +411,7 @@ button.delete-btn:hover {
 /* Пустое состояние */
 .empty-state {
   text-align: center;
-  color: var(--tg-hint);
+  color: var(--hint-color);
   font-size: 14px;
   padding: 24px 12px;
   display: none;

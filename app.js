@@ -5,22 +5,23 @@ if (tg) {
   tg.expand();
 }
 
-// Ключ для хранения в localStorage
-const STORAGE_KEY = 'tg_habits';
+// Ключи для localStorage
+const HABITS_STORAGE_KEY = 'tg_habits';
+const THEME_STORAGE_KEY = 'tg_app_theme';
 
-// Начальные примеры привычек (если хранилище пустое)
+// Начальные привычки по умолчанию (если список пуст)
 const DEFAULT_HABITS = [
   { id: '1', text: 'Выпить 2 стакана воды утром', completed: true },
   { id: '2', text: 'Утренняя зарядка 15 мин', completed: false },
   { id: '3', text: 'Прочитать 10 страниц книги', completed: false }
 ];
 
-// Загрузка привычек из localStorage
+// Загрузка привычек
 let habits = loadHabits();
 
 function loadHabits() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(HABITS_STORAGE_KEY);
     if (!raw) return DEFAULT_HABITS;
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : DEFAULT_HABITS;
@@ -30,23 +31,23 @@ function loadHabits() {
   }
 }
 
-// Сохранение привычек в localStorage
+// Сохранение привычек
 function saveHabits() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+    localStorage.setItem(HABITS_STORAGE_KEY, JSON.stringify(habits));
   } catch (e) {
     console.error('Ошибка сохранения привычек в localStorage:', e);
   }
 }
 
-// Экранирование HTML для защиты от XSS
+// Экранирование HTML от XSS
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
 
-// Тактильный отклик через Telegram WebApp
+// Тактильный отклик Telegram WebApp
 function triggerHaptic(type = 'light') {
   if (tg?.HapticFeedback) {
     if (type === 'success') {
@@ -56,6 +57,60 @@ function triggerHaptic(type = 'light') {
     }
   }
 }
+
+// ============================================================
+// УПРАВЛЕНИЕ ТЕМОЙ ОФОРМЛЕНИЯ С СОХРАНЕНИЕМ В LOCALSTORAGE
+// ============================================================
+
+// Определение темы при запуске: localStorage -> Telegram -> Системная
+function getInitialTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    if (saved === 'dark' || saved === 'light') {
+      return saved;
+    }
+  } catch (e) {}
+
+  if (tg?.colorScheme) {
+    return tg.colorScheme === 'dark' ? 'dark' : 'light';
+  }
+
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light';
+}
+
+// Применение темы (добавляет/удаляет dark-theme и light-theme на body)
+function applyTheme(themeName, save = false) {
+  const isDark = themeName === 'dark';
+  document.body.classList.remove('dark-theme', 'light-theme');
+  document.body.classList.add(isDark ? 'dark-theme' : 'light-theme');
+
+  const themeIcon = document.getElementById('theme-icon');
+  const themeLabel = document.getElementById('theme-label');
+  if (themeIcon) themeIcon.textContent = isDark ? '🌙' : '☀️';
+  if (themeLabel) themeLabel.textContent = isDark ? 'Тёмная' : 'Светлая';
+
+  if (save) {
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, isDark ? 'dark' : 'light');
+    } catch (e) {
+      console.error('Ошибка сохранения темы в localStorage:', e);
+    }
+  }
+}
+
+// Переключение темы пользователем
+function toggleTheme() {
+  const currentIsDark = document.body.classList.contains('dark-theme');
+  const nextTheme = currentIsDark ? 'light' : 'dark';
+  applyTheme(nextTheme, true);
+  triggerHaptic('light');
+}
+
+// ============================================================
+// СЧЕТЧИК И СПИСОК ПРИВЫЧЕК
+// ============================================================
 
 // Обновление счетчика "Выполнено: X из Y"
 function updateProgress() {
@@ -70,28 +125,7 @@ function updateProgress() {
   el.textContent = `Выполнено: ${completedCount} из ${total}`;
 }
 
-// Управление темой оформления
-function getInitialTheme() {
-  if (tg?.colorScheme) {
-    return tg.colorScheme === 'dark';
-  }
-  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-}
-
-let isDark = getInitialTheme();
-
-function applyTheme(dark) {
-  isDark = dark;
-  document.body.classList.remove('tg-dark', 'tg-light');
-  document.body.classList.add(isDark ? 'tg-dark' : 'tg-light');
-
-  const themeIcon = document.getElementById('theme-icon');
-  const themeLabel = document.getElementById('theme-label');
-  if (themeIcon) themeIcon.textContent = isDark ? '🌙' : '☀️';
-  if (themeLabel) themeLabel.textContent = isDark ? 'Тёмная' : 'Светлая';
-}
-
-// Отрисовка списка привычек в DOM
+// Отрисовка списка привычек
 function renderHabits() {
   const habitList = document.getElementById('habit-list');
   const emptyState = document.getElementById('empty-state');
@@ -121,7 +155,7 @@ function renderHabits() {
         <button class="delete-btn" type="button" aria-label="Удалить привычку" title="Удалить">&times;</button>
       `;
 
-      // Переключение статуса выполнения привычки
+      // Переключение выполнения привычки
       const content = li.querySelector('.habit-content');
       content.addEventListener('click', () => {
         toggleHabit(habit.id);
@@ -138,7 +172,6 @@ function renderHabits() {
     });
   }
 
-  // Обновляем счетчик
   updateProgress();
 }
 
@@ -184,27 +217,34 @@ function deleteHabit(id) {
   triggerHaptic('medium');
 }
 
-// Инициализация событий при загрузке документа
-function init() {
-  applyTheme(isDark);
+// ============================================================
+// ИНИЦИАЛИЗАЦИЯ
+// ============================================================
 
+function init() {
+  // Устанавливаем тему
+  applyTheme(getInitialTheme(), false);
+
+  // Кнопка переключения темы
   const themeToggle = document.getElementById('theme-toggle');
   if (themeToggle) {
     themeToggle.addEventListener('click', (e) => {
       e.preventDefault();
-      applyTheme(!isDark);
-      triggerHaptic('light');
+      toggleTheme();
     });
   }
 
+  // Реакция на смену темы в Telegram (только если пользователь не сохранил свой выбор)
   if (tg?.onEvent) {
     tg.onEvent('themeChanged', () => {
-      if (tg.colorScheme) {
-        applyTheme(tg.colorScheme === 'dark');
+      const saved = localStorage.getItem(THEME_STORAGE_KEY);
+      if (!saved && tg.colorScheme) {
+        applyTheme(tg.colorScheme === 'dark' ? 'dark' : 'light', false);
       }
     });
   }
 
+  // Обработка формы добавления
   const habitForm = document.getElementById('habit-form');
   const habitInput = document.getElementById('habit-input');
   if (habitForm && habitInput) {
