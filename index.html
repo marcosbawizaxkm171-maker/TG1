@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Трекер привычек</title>
+  <!-- Подключение официального скрипта Telegram Web App -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="title">Трекер привычек</h1>
+    </header>
+
+    <!-- Поле для ввода новой привычки и кнопка "Добавить" -->
+    <form id="habit-form" class="habit-form">
+      <input 
+        type="text" 
+        id="habit-input" 
+        class="habit-input" 
+        placeholder="Новая привычка..." 
+        autocomplete="off" 
+        required
+      >
+      <button type="submit" id="add-btn" class="habit-btn">Добавить</button>
+    </form>
+
+    <!-- Контейнер для списка привычек -->
+    <div class="habit-list-container">
+      <ul id="habit-list" class="habit-list"></ul>
+      <p id="empty-state" class="empty-state">У вас пока нет привычек. Добавьте первую выше!</p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

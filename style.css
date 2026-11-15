@@ -1,0 +1,180 @@
+/* Сброс базовых стилей и адаптация под тему Telegram */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--tg-theme-bg-color, #ffffff);
+  color: var(--tg-theme-text-color, #222222);
+  min-height: 100vh;
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.header {
+  text-align: center;
+  padding: 8px 0;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--tg-theme-text-color, #222222);
+}
+
+/* Форма добавления привычки */
+.habit-form {
+  display: flex;
+  gap: 8px;
+}
+
+.habit-input {
+  flex: 1;
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 1px solid rgba(128, 128, 128, 0.25);
+  border-radius: 12px;
+  outline: none;
+  background-color: var(--tg-theme-secondary-bg-color, #f4f4f5);
+  color: var(--tg-theme-text-color, #222222);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.habit-input::placeholder {
+  color: var(--tg-theme-hint-color, #8e8e93);
+}
+
+.habit-input:focus {
+  border-color: var(--tg-theme-button-color, #2481cc);
+}
+
+.habit-btn {
+  padding: 12px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--tg-theme-button-text-color, #ffffff);
+  background-color: var(--tg-theme-button-color, #2481cc);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  white-space: nowrap;
+}
+
+.habit-btn:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+/* Список привычек */
+.habit-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.habit-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.habit-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background-color: var(--tg-theme-secondary-bg-color, #f4f4f5);
+  transition: opacity 0.2s, background-color 0.2s;
+  cursor: pointer;
+}
+
+.habit-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.habit-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 2px solid var(--tg-theme-button-color, #2481cc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.habit-item.completed .habit-checkbox {
+  background-color: var(--tg-theme-button-color, #2481cc);
+}
+
+.habit-checkbox svg {
+  display: none;
+  width: 14px;
+  height: 14px;
+  stroke: var(--tg-theme-button-text-color, #ffffff);
+}
+
+.habit-item.completed .habit-checkbox svg {
+  display: block;
+}
+
+.habit-text {
+  font-size: 16px;
+  color: var(--tg-theme-text-color, #222222);
+  word-break: break-word;
+  transition: color 0.2s, text-decoration 0.2s;
+}
+
+/* Отметка о выполнении — зачеркивание */
+.habit-item.completed .habit-text {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--tg-theme-hint-color, #8e8e93);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: color 0.2s, background-color 0.2s;
+}
+
+.delete-btn:hover {
+  color: #ff3b30;
+  background-color: rgba(255, 59, 48, 0.1);
+}
+
+/* Пустое состояние */
+.empty-state {
+  text-align: center;
+  color: var(--tg-theme-hint-color, #8e8e93);
+  font-size: 15px;
+  padding: 32px 16px;
+  display: none;
+}
