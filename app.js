@@ -5,49 +5,36 @@ if (tg) {
   tg.expand();
 }
 
-// Ключи для localStorage
-const HABITS_STORAGE_KEY = 'tg_habits';
+// Конфигурация Supabase
+const SUPABASE_URL = 'https://bxihlyvxjbogrknhictr.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_yzIVR0rDqR7P7woXxMoVMQ_U2luuo-k';
+
+// Инициализация клиента Supabase через глобальный объект библиотеки supabase-js
+const supabaseClient = window.supabase
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
+
+// Определение ID текущего пользователя (Telegram user.id или тестовый ID для локальной проверки)
+function getUserId() {
+  const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+  return tgUserId || 123456789;
+}
+const currentUserId = getUserId();
+
+// Ключ для хранения темы оформления в localStorage
 const THEME_STORAGE_KEY = 'tg_app_theme';
 
-// Начальные привычки по умолчанию (если список пуст)
-const DEFAULT_HABITS = [
-  { id: '1', text: 'Выпить 2 стакана воды утром', completed: true },
-  { id: '2', text: 'Утренняя зарядка 15 мин', completed: false },
-  { id: '3', text: 'Прочитать 10 страниц книги', completed: false }
-];
+// Локальное состояние списка привычек текущего пользователя
+let habits = [];
 
-// Загрузка привычек
-let habits = loadHabits();
-
-function loadHabits() {
-  try {
-    const raw = localStorage.getItem(HABITS_STORAGE_KEY);
-    if (!raw) return DEFAULT_HABITS;
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : DEFAULT_HABITS;
-  } catch (e) {
-    console.error('Ошибка загрузки привычек из localStorage:', e);
-    return DEFAULT_HABITS;
-  }
-}
-
-// Сохранение привычек
-function saveHabits() {
-  try {
-    localStorage.setItem(HABITS_STORAGE_KEY, JSON.stringify(habits));
-  } catch (e) {
-    console.error('Ошибка сохранения привычек в localStorage:', e);
-  }
-}
-
-// Экранирование HTML от XSS
+// Экранирование HTML для защиты от XSS
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
 
-// Тактильный отклик Telegram WebApp
+// Тактильный отклик через Telegram WebApp
 function triggerHaptic(type = 'light') {
   if (tg?.HapticFeedback) {
     if (type === 'success') {
@@ -59,10 +46,9 @@ function triggerHaptic(type = 'light') {
 }
 
 // ============================================================
-// УПРАВЛЕНИЕ ТЕМОЙ ОФОРМЛЕНИЯ С СОХРАНЕНИЕМ В LOCALSTORAGE
+// УПРАВЛЕНИЕ ТЕМОЙ ОФОРМЛЕНИЯ (СОХРАНЯЕТСЯ В LOCALSTORAGE)
 // ============================================================
 
-// Определение темы при запуске: localStorage -> Telegram -> Системная
 function getInitialTheme() {
   try {
     const saved = localStorage.getItem(THEME_STORAGE_KEY);
@@ -80,7 +66,6 @@ function getInitialTheme() {
     : 'light';
 }
 
-// Применение темы (добавляет/удаляет dark-theme и light-theme на body)
 function applyTheme(themeName, save = false) {
   const isDark = themeName === 'dark';
   document.body.classList.remove('dark-theme', 'light-theme');
@@ -100,7 +85,6 @@ function applyTheme(themeName, save = false) {
   }
 }
 
-// Переключение темы пользователем
 function toggleTheme() {
   const currentIsDark = document.body.classList.contains('dark-theme');
   const nextTheme = currentIsDark ? 'light' : 'dark';
@@ -109,7 +93,7 @@ function toggleTheme() {
 }
 
 // ============================================================
-// СЧЕТЧИК И СПИСОК ПРИВЫЧЕК
+// СЧЕТЧИК И ОТОБРАЖЕНИЕ ПРИВЫЧЕК
 // ============================================================
 
 // Обновление счетчика "Выполнено: X из Y"
@@ -119,7 +103,7 @@ function updateProgress() {
 
   const total = Array.isArray(habits) ? habits.length : 0;
   const completedCount = Array.isArray(habits)
-    ? habits.filter((h) => Boolean(h.completed)).length
+    ? habits.filter((h) => Boolean(h.is_done)).length
     : 0;
 
   el.textContent = `Выполнено: ${completedCount} из ${total}`;
@@ -140,7 +124,7 @@ function renderHabits() {
 
     habits.forEach((habit) => {
       const li = document.createElement('li');
-      li.className = `habit-item ${habit.completed ? 'completed' : ''}`;
+      li.className = `habit-item ${habit.is_done ? 'completed' : ''}`;
       li.dataset.id = habit.id;
 
       li.innerHTML = `
@@ -150,18 +134,18 @@ function renderHabits() {
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </div>
-          <span class="habit-text">${escapeHtml(habit.text)}</span>
+          <span class="habit-text">${escapeHtml(habit.title)}</span>
         </div>
         <button class="delete-btn" type="button" aria-label="Удалить привычку" title="Удалить">&times;</button>
       `;
 
-      // Переключение выполнения привычки
+      // Клик по чекбоксу/тексту: переключение выполнения привычки
       const content = li.querySelector('.habit-content');
       content.addEventListener('click', () => {
         toggleHabit(habit.id);
       });
 
-      // Удаление привычки
+      // Клик по крестику: удаление привычки
       const deleteBtn = li.querySelector('.delete-btn');
       deleteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -175,54 +159,149 @@ function renderHabits() {
   updateProgress();
 }
 
-// Добавление новой привычки
-function addHabit(text) {
-  const trimmedText = text.trim();
-  if (!trimmedText) return;
+// ============================================================
+// АСИНХРОННЫЕ ОПЕРАЦИИ С ОБЛАЧНОЙ БАЗОЙ ДАННЫХ SUPABASE
+// ============================================================
 
-  const newHabit = {
-    id: Date.now().toString(),
-    text: trimmedText,
-    completed: false
-  };
+// 1. Загрузка привычек текущего пользователя (сортировка по id по возрастанию)
+async function fetchHabits() {
+  if (!supabaseClient) {
+    console.error('Клиент Supabase не инициализирован. Проверьте подключение скрипта через CDN.');
+    return;
+  }
 
-  habits.unshift(newHabit);
-  saveHabits();
-  renderHabits();
-  updateProgress();
-  triggerHaptic('success');
-}
+  try {
+    const { data, error } = await supabaseClient
+      .from('habits')
+      .select('*')
+      .eq('user_id', currentUserId)
+      .order('id', { ascending: true });
 
-// Переключение выполнения привычки (зачеркивание)
-function toggleHabit(id) {
-  habits = habits.map((habit) => {
-    if (habit.id === id) {
-      return { ...habit, completed: !habit.completed };
+    if (error) {
+      console.error('Ошибка загрузки привычек из Supabase:', error);
+      return;
     }
-    return habit;
-  });
 
-  saveHabits();
-  renderHabits();
-  updateProgress();
-  triggerHaptic('light');
+    habits = data || [];
+    renderHabits();
+  } catch (err) {
+    console.error('Сетевая ошибка при загрузке привычек:', err);
+  }
 }
 
-// Удаление привычки
-function deleteHabit(id) {
-  habits = habits.filter((habit) => habit.id !== id);
-  saveHabits();
+// 2. Добавление новой привычки в Supabase
+async function addHabit(title) {
+  const trimmedTitle = title.trim();
+  if (!trimmedTitle || !supabaseClient) return;
+
+  const addBtn = document.getElementById('add-btn');
+  const habitInput = document.getElementById('habit-input');
+
+  if (addBtn) addBtn.disabled = true;
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('habits')
+      .insert([
+        {
+          user_id: currentUserId,
+          title: trimmedTitle,
+          is_done: false
+        }
+      ])
+      .select();
+
+    if (error) {
+      console.error('Ошибка добавления привычки в Supabase:', error);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      habits.push(data[0]);
+    } else {
+      await fetchHabits();
+      return;
+    }
+
+    if (habitInput) habitInput.value = '';
+    renderHabits();
+    triggerHaptic('success');
+  } catch (err) {
+    console.error('Сетевая ошибка при добавлении привычки:', err);
+  } finally {
+    if (addBtn) addBtn.disabled = false;
+    if (habitInput) habitInput.focus();
+  }
+}
+
+// 3. Переключение выполнения привычки (is_done) по id
+async function toggleHabit(id) {
+  if (!supabaseClient) return;
+
+  const habit = habits.find((h) => h.id === id);
+  if (!habit) return;
+
+  const previousStatus = habit.is_done;
+  const newStatus = !previousStatus;
+
+  // Оптимистичное обновление интерфейса
+  habit.is_done = newStatus;
   renderHabits();
-  updateProgress();
+  triggerHaptic('light');
+
+  try {
+    const { error } = await supabaseClient
+      .from('habits')
+      .update({ is_done: newStatus })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Ошибка обновления привычки в Supabase:', error);
+      // Откатываем изменение при ошибке
+      habit.is_done = previousStatus;
+      renderHabits();
+    }
+  } catch (err) {
+    console.error('Сетевая ошибка при обновлении привычки:', err);
+    habit.is_done = previousStatus;
+    renderHabits();
+  }
+}
+
+// 4. Удаление привычки по id
+async function deleteHabit(id) {
+  if (!supabaseClient) return;
+
+  const previousHabits = [...habits];
+  habits = habits.filter((h) => h.id !== id);
+  renderHabits();
   triggerHaptic('medium');
+
+  try {
+    const { error } = await supabaseClient
+      .from('habits')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Ошибка удаления привычки из Supabase:', error);
+      // Восстанавливаем список при ошибке
+      habits = previousHabits;
+      renderHabits();
+    }
+  } catch (err) {
+    console.error('Сетевая ошибка при удалении привычки:', err);
+    habits = previousHabits;
+    renderHabits();
+  }
 }
 
 // ============================================================
-// ИНИЦИАЛИЗАЦИЯ
+// ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ
 // ============================================================
 
 function init() {
-  // Устанавливаем тему
+  // Применение темы
   applyTheme(getInitialTheme(), false);
 
   // Кнопка переключения темы
@@ -234,7 +313,7 @@ function init() {
     });
   }
 
-  // Реакция на смену темы в Telegram (только если пользователь не сохранил свой выбор)
+  // Реакция на изменение темы Telegram
   if (tg?.onEvent) {
     tg.onEvent('themeChanged', () => {
       const saved = localStorage.getItem(THEME_STORAGE_KEY);
@@ -244,20 +323,18 @@ function init() {
     });
   }
 
-  // Обработка формы добавления
+  // Обработка отправки формы
   const habitForm = document.getElementById('habit-form');
   const habitInput = document.getElementById('habit-input');
   if (habitForm && habitInput) {
     habitForm.addEventListener('submit', (e) => {
       e.preventDefault();
       addHabit(habitInput.value);
-      habitInput.value = '';
-      habitInput.focus();
     });
   }
 
-  renderHabits();
-  updateProgress();
+  // Загружаем данные пользователя из облака Supabase
+  fetchHabits();
 }
 
 if (document.readyState === 'loading') {
