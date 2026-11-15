@@ -21,11 +21,34 @@ function getUserId() {
 }
 const currentUserId = getUserId();
 
-// Ключ для хранения темы оформления в localStorage
+// Ключи для localStorage
 const THEME_STORAGE_KEY = 'tg_app_theme';
+const LAST_RESET_DATE_KEY = 'tg_last_reset_date';
 
-// Локальное состояние списка привычек текущего пользователя
+// Локальное состояние приложения
 let habits = [];
+let currentUserStats = {
+  user_id: currentUserId,
+  streak: 0,
+  last_completed_date: null
+};
+
+// ============================================================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДАТЫ (С УЧЕТОМ ЧАСОВОГО ПОЯСА)
+// ============================================================
+
+function getLocalDateString(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getYesterdayDateString() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return getLocalDateString(d);
+}
 
 // Экранирование HTML для защиты от XSS
 function escapeHtml(text) {
@@ -50,14 +73,12 @@ function triggerHaptic(type = 'light') {
 // Праздничный салют конфетти при 100% выполнении привычек
 function launchConfetti() {
   if (typeof confetti === 'function') {
-    // Основной залп конфетти по центру
     confetti({
       particleCount: 80,
       spread: 70,
       origin: { y: 0.6 }
     });
 
-    // Боковые салюты через 200 мс для вау-эффекта
     setTimeout(() => {
       confetti({
         particleCount: 40,
@@ -123,8 +144,22 @@ function toggleTheme() {
 }
 
 // ============================================================
-// СЧЕТЧИК И ОТОБРАЖЕНИЕ ПРИВЫЧЕК
+// ОТОБРАЖЕНИЕ СТАТИСТИКИ И СПИСКА ПРИВЫЧЕК
 // ============================================================
+
+// Обновление бейджа серии дней (Streak)
+function updateStreakUI() {
+  const streakCount = document.getElementById('streak-count');
+  const streakBadge = document.getElementById('streak-badge');
+  const streak = currentUserStats.streak || 0;
+
+  if (streakCount) {
+    streakCount.textContent = `${streak} дн.`;
+  }
+  if (streakBadge) {
+    streakBadge.classList.toggle('active', streak > 0);
+  }
+}
 
 // Обновление счетчика "Выполнено: X из Y"
 function updateProgress() {
@@ -190,15 +225,103 @@ function renderHabits() {
 }
 
 // ============================================================
-// АСИНХРОННЫЕ ОПЕРАЦИИ С ОБЛАЧНОЙ БАЗОЙ ДАННЫХ SUPABASE
+// АСИНХРОННЫЕ ОПЕРАЦИИ С SUPABASE (HABITS И USER_STATS)
 // ============================================================
 
-// 1. Загрузка привычек текущего пользователя (сортировка по id по возрастанию)
-async function fetchHabits() {
-  if (!supabaseClient) {
-    console.error('Клиент Supabase не инициализирован. Проверьте подключение скрипта через CDN.');
-    return;
+// Загрузка статистики пользователя и проверка нового дня
+async function fetchUserStats() {
+  if (!supabaseClient) return;
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('user_stats')
+      .select('*')
+      .eq('user_id', currentUserId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Ошибка загрузки user_stats из Supabase:', error);
+      return;
+    }
+
+    if (data) {
+      currentUserStats = data;
+    } else {
+      currentUserStats = {
+        user_id: currentUserId,
+        streak: 0,
+        last_completed_date: null
+      };
+
+      const { data: created, error: createError } = await supabaseClient
+        .from('user_stats')
+        .upsert(currentUserStats)
+        .select()
+        .single();
+
+      if (!createError && created) {
+        currentUserStats = created;
+      }
+    }
+
+    // Проверяем наступление нового дня и пропуск серии
+    await checkDailyReset();
+    updateStreakUI();
+  } catch (err) {
+    console.error('Ошибка в fetchUserStats:', err);
   }
+}
+
+// Проверка нового дня и сброс привычек / серии дней
+async function checkDailyReset() {
+  const today = getLocalDateString();
+  const yesterday = getYesterdayDateString();
+  const lastDate = currentUserStats.last_completed_date;
+
+  let needsStatsUpdate = false;
+
+  // Если last_completed_date не равен ни сегодня, ни вчера (и не null) — пропуск дня, сбрасываем серию
+  if (lastDate && lastDate !== today && lastDate !== yesterday) {
+    if (currentUserStats.streak !== 0) {
+      currentUserStats.streak = 0;
+      needsStatsUpdate = true;
+    }
+  }
+
+  // Если last_completed_date не равен сегодняшней дате — наступил новый день
+  // Сбрасываем у всех привычек статус is_done = false
+  const lastResetDate = localStorage.getItem(LAST_RESET_DATE_KEY);
+  if (lastDate !== today && lastResetDate !== today) {
+    try {
+      await supabaseClient
+        .from('habits')
+        .update({ is_done: false })
+        .eq('user_id', currentUserId);
+
+      localStorage.setItem(LAST_RESET_DATE_KEY, today);
+    } catch (err) {
+      console.error('Ошибка сброса привычек на новый день:', err);
+    }
+  }
+
+  if (needsStatsUpdate) {
+    try {
+      await supabaseClient
+        .from('user_stats')
+        .upsert({
+          user_id: currentUserId,
+          streak: currentUserStats.streak,
+          last_completed_date: currentUserStats.last_completed_date
+        });
+    } catch (err) {
+      console.error('Ошибка обновления streak при пропуске дня:', err);
+    }
+  }
+}
+
+// Загрузка привычек текущего пользователя
+async function fetchHabits() {
+  if (!supabaseClient) return;
 
   try {
     const { data, error } = await supabaseClient
@@ -219,7 +342,7 @@ async function fetchHabits() {
   }
 }
 
-// 2. Добавление новой привычки в Supabase
+// Добавление новой привычки
 async function addHabit(title) {
   const trimmedTitle = title.trim();
   if (!trimmedTitle || !supabaseClient) return;
@@ -264,7 +387,7 @@ async function addHabit(title) {
   }
 }
 
-// 3. Переключение выполнения привычки (is_done) по id
+// Переключение выполнения привычки (is_done) и рост огонька (Streak)
 async function toggleHabit(id) {
   if (!supabaseClient) return;
 
@@ -278,17 +401,41 @@ async function toggleHabit(id) {
   habit.is_done = newStatus;
   renderHabits();
 
-  // Проверяем, выполнено ли 100% привычек
+  // Проверяем 100% выполнение всех привычек
   const total = habits.length;
   const completedCount = habits.filter((h) => Boolean(h.is_done)).length;
   const isAllDone = total > 0 && completedCount === total;
 
   if (newStatus && isAllDone) {
-    // Победный отклик и праздничный салют конфетти при 100% выполнении
-    triggerHaptic('success');
-    launchConfetti();
+    const today = getLocalDateString();
+
+    // Проверяем, не засчитана ли уже серия сегодня
+    if (currentUserStats.last_completed_date !== today) {
+      currentUserStats.streak = (currentUserStats.streak || 0) + 1;
+      currentUserStats.last_completed_date = today;
+      updateStreakUI();
+      triggerHaptic('success');
+      launchConfetti();
+
+      // Сохраняем новую серию и дату в user_stats
+      try {
+        await supabaseClient
+          .from('user_stats')
+          .upsert({
+            user_id: currentUserId,
+            streak: currentUserStats.streak,
+            last_completed_date: currentUserStats.last_completed_date
+          });
+      } catch (err) {
+        console.error('Ошибка сохранения streak в Supabase:', err);
+      }
+    } else {
+      // Уже засчитано сегодня: победный отклик и салют
+      triggerHaptic('success');
+      launchConfetti();
+    }
   } else {
-    // Обычная легкая вибрация при отметке
+    // Обычная легкая вибрация
     triggerHaptic('light');
   }
 
@@ -300,7 +447,6 @@ async function toggleHabit(id) {
 
     if (error) {
       console.error('Ошибка обновления привычки в Supabase:', error);
-      // Откатываем изменение при ошибке
       habit.is_done = previousStatus;
       renderHabits();
     }
@@ -311,7 +457,7 @@ async function toggleHabit(id) {
   }
 }
 
-// 4. Удаление привычки по id
+// Удаление привычки
 async function deleteHabit(id) {
   if (!supabaseClient) return;
 
@@ -328,7 +474,6 @@ async function deleteHabit(id) {
 
     if (error) {
       console.error('Ошибка удаления привычки из Supabase:', error);
-      // Восстанавливаем список при ошибке
       habits = previousHabits;
       renderHabits();
     }
@@ -343,7 +488,7 @@ async function deleteHabit(id) {
 // ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ
 // ============================================================
 
-function init() {
+async function init() {
   // Применение темы
   applyTheme(getInitialTheme(), false);
 
@@ -376,8 +521,11 @@ function init() {
     });
   }
 
-  // Загружаем данные пользователя из облака Supabase
-  fetchHabits();
+  // Сначала загружаем user_stats и проверяем новый день / сброс привычек
+  await fetchUserStats();
+
+  // Затем загружаем актуальный список привычек
+  await fetchHabits();
 }
 
 if (document.readyState === 'loading') {

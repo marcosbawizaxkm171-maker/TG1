@@ -6,12 +6,12 @@
   <title>Трекер привычек</title>
   <!-- Официальный скрипт Telegram Web App -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- Подключение стилей с версией ?v=6 для сброса кэша Telegram -->
-  <link rel="stylesheet" href="style.css?v=6">
+  <!-- Подключение стилей с версией ?v=7 для сброса кэша Telegram -->
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
   <div class="app-card">
-    <!-- Шапка приложения с иконкой, названием, прогрессом и переключателем темы -->
+    <!-- Шапка приложения с иконкой, названием, прогрессом, серией дней (Streak) и переключателем темы -->
     <header class="app-header">
       <div class="header-left">
         <div class="header-badge" aria-hidden="true">
@@ -21,7 +21,13 @@
         </div>
         <div class="header-titles">
           <h1 class="title">Трекер привычек</h1>
-          <span id="progress-text" class="progress-text">Выполнено: 0 из 0</span>
+          <div class="header-stats">
+            <span id="progress-text" class="progress-text">Выполнено: 0 из 0</span>
+            <span id="streak-badge" class="streak-badge" title="Серия дней подряд">
+              <span class="streak-icon">🔥</span>
+              <span id="streak-count">0 дн.</span>
+            </span>
+          </div>
         </div>
       </div>
       <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Переключить тему">
@@ -54,7 +60,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- Подключение библиотеки canvas-confetti через CDN для праздничного салюта -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
-  <!-- Подключение скрипта приложения с версией ?v=6 для сброса кэша Telegram -->
-  <script src="app.js?v=6"></script>
+  <!-- Подключение скрипта приложения с версией ?v=7 для сброса кэша Telegram -->
+  <script src="app.js?v=7"></script>
 </body>
 </html>
